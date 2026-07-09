@@ -116,6 +116,12 @@
   .vchart{position:relative;display:flex;align-items:flex-end;gap:10px;height:240px;padding-top:20px;border-bottom:2px solid var(--border);overflow-x:auto}
   .vcol{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:56px;flex:1;height:100%;position:relative}
   .vbar{width:70%;max-width:44px;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden}
+  .vgroup{display:flex;gap:3px;align-items:flex-end;height:100%;justify-content:center}
+  .vbar2{width:10px;border-radius:3px 3px 0 0;min-height:2px}
+  .med-setor{display:flex;flex-direction:column;gap:2px;min-width:100px}
+  .med-setor .ms-nome{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .med-setor .ms-val{font-family:var(--mono);font-size:20px;font-weight:600}
+  .med-setor .ms-meta{font-size:10px;color:var(--muted)}
   .vseg{width:100%}
   .vtotal{font-family:var(--mono);font-size:11px;color:var(--text);margin-bottom:4px;font-weight:600}
   .vday{font-size:10px;color:var(--muted);margin-top:6px;font-family:var(--mono);white-space:nowrap}
@@ -368,14 +374,18 @@
         <p>Análises do período filtrado. Use a barra de filtros acima para escolher datas, turno, setor ou profissional.</p>
       </div>
       <div class="kpi-grid">
-        <div class="kpi-card accent"><div class="kpi-label">Média Diária</div><div class="kpi-value" id="rel-media-diaria">0</div><div class="kpi-sub">peças/dia · meta 400</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">Média Semanal</div><div class="kpi-value" id="rel-media-semanal">0</div><div class="kpi-sub">peças/semana · meta 2.800</div></div>
+        <div class="kpi-card accent"><div class="kpi-label">Média Diária Geral</div><div class="kpi-value" id="rel-media-diaria">0</div><div class="kpi-sub">soma dos setores · meta 400/setor</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Média Semanal Geral</div><div class="kpi-value" id="rel-media-semanal">0</div><div class="kpi-sub">soma dos setores</div></div>
         <div class="kpi-card green"><div class="kpi-label">Total no Período</div><div class="kpi-value" id="rel-total-periodo">0</div><div class="kpi-sub">peças produzidas</div></div>
-        <div class="kpi-card yellow"><div class="kpi-label">Dias na Meta</div><div class="kpi-value" id="rel-dias-meta">0/0</div><div class="kpi-sub">dias com ≥ 400 peças</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Metas Batidas</div><div class="kpi-value" id="rel-dias-meta">0/0</div><div class="kpi-sub">setor-dias com ≥ 400 peças</div></div>
+      </div>
+      <div class="chart-panel" style="padding:16px 24px">
+        <h3 style="margin-bottom:12px">Média Diária por Setor <span style="font-weight:400;color:var(--muted);font-size:12px">· meta 400 peças/dia por setor</span></h3>
+        <div id="rel-medias-setor" style="display:flex;gap:24px;flex-wrap:wrap"></div>
       </div>
       <div class="chart-panel">
         <h3>Produção Diária por Setor</h3>
-        <div class="chart-sub">Colunas empilhadas por setor · linha tracejada = meta de 400 peças/dia</div>
+        <div class="chart-sub">Uma coluna por setor em cada dia · linha tracejada = meta de 400 peças/dia <strong>por setor</strong></div>
         <div class="vchart" id="vchart"></div>
         <div class="chart-legend" id="vchart-legend"></div>
       </div>
@@ -821,7 +831,7 @@ function isoWeek(dateStr) {
 }
 
 function renderRelatorios(d) {
-  // ── Dashboard diário ──
+  // ── Dashboard diário (meta de 400 é POR SETOR) ──
   const porDia = {};
   d.prods.forEach(r => {
     if (!contaVolume(r)) return;
@@ -834,27 +844,54 @@ function renderRelatorios(d) {
   const mediaDiaria = dias.length ? Math.round(totalPeriodo/dias.length) : 0;
   const semanas = [...new Set(dias.map(isoWeek))];
   const mediaSemanal = semanas.length ? Math.round(totalPeriodo/semanas.length) : 0;
-  const diasMeta = dias.filter(dt => porDia[dt].total >= META_DIARIA).length;
+
+  // Setor-dias na meta: cada setor precisa bater 400 por dia
+  let metasBatidas = 0, metasTotais = 0;
+  dias.forEach(dt => {
+    SETORES.forEach(s => {
+      metasTotais++;
+      if ((porDia[dt].setores[s]||0) >= META_DIARIA) metasBatidas++;
+    });
+  });
 
   document.getElementById('rel-media-diaria').textContent  = mediaDiaria;
   document.getElementById('rel-media-semanal').textContent = mediaSemanal;
   document.getElementById('rel-total-periodo').textContent = totalPeriodo;
-  document.getElementById('rel-dias-meta').textContent     = `${diasMeta}/${dias.length}`;
-  document.getElementById('rel-media-diaria').style.color  = mediaDiaria >= META_DIARIA ? 'var(--green)' : 'var(--red)';
+  document.getElementById('rel-dias-meta').textContent     = `${metasBatidas}/${metasTotais}`;
+  document.getElementById('rel-media-diaria').style.color  = '';
 
-  // Gráfico de colunas empilhadas
+  // Média diária por setor (vs meta 400)
+  const mediaSetorEl = document.getElementById('rel-medias-setor');
+  if (mediaSetorEl) {
+    mediaSetorEl.innerHTML = SETORES.map(s => {
+      const totalSetor = dias.reduce((a,dt)=>a+(porDia[dt].setores[s]||0), 0);
+      const media = dias.length ? Math.round(totalSetor/dias.length) : 0;
+      const cor = media >= META_DIARIA ? 'var(--green)' : 'var(--red)';
+      const pctMeta = META_DIARIA > 0 ? Math.round(media/META_DIARIA*100) : 0;
+      return `<div class="med-setor">
+        <div class="ms-nome">${s}</div>
+        <div class="ms-val" style="color:${cor}">${media}</div>
+        <div class="ms-meta">${pctMeta}% da meta (400)</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Gráfico: colunas AGRUPADAS por setor (cada barra comparada à meta individual)
   const chart = document.getElementById('vchart');
-  const maxDia = Math.max(META_DIARIA, ...dias.map(dt=>porDia[dt].total), 1);
-  const escala = 200 / maxDia; // px por peça (área útil 200px)
-  const diasExibidos = dias.slice(-21); // últimos 21 dias do período
-  let html = `<div class="meta-line" style="bottom:${Math.round(META_DIARIA*escala)}px"><span>META ${META_DIARIA}</span></div>`;
+  let maxVal = META_DIARIA;
+  dias.forEach(dt => SETORES.forEach(s => { const v = porDia[dt].setores[s]||0; if (v > maxVal) maxVal = v; }));
+  const escala = 200 / maxVal;
+  const diasExibidos = dias.slice(-14); // últimos 14 dias do período
+  let html = `<div class="meta-line" style="bottom:${Math.round(META_DIARIA*escala)}px"><span>META ${META_DIARIA}/setor</span></div>`;
   html += diasExibidos.map(dt => {
     const dia = porDia[dt];
     const [y,m,dd] = dt.split('-');
-    const segs = SETORES.filter(s=>dia.setores[s]).map(s =>
-      `<div class="vseg" style="height:${Math.max(2,Math.round(dia.setores[s]*escala))}px;background:${SETOR_CORES[s]}" title="${s}: ${dia.setores[s]} pç"></div>`
-    ).join('');
-    return `<div class="vcol"><div class="vtotal" style="color:${dia.total>=META_DIARIA?'var(--green)':'var(--red)'}">${dia.total}</div><div class="vbar">${segs}</div><div class="vday">${dd}/${m}</div></div>`;
+    const barras = SETORES.map(s => {
+      const v = dia.setores[s]||0;
+      const op = v > 0 ? 1 : 0.15;
+      return `<div class="vbar2" style="height:${Math.max(2,Math.round(v*escala))}px;background:${SETOR_CORES[s]};opacity:${op}" title="${s}: ${v} pç ${v>=META_DIARIA?'✓ meta':'— abaixo da meta'}"></div>`;
+    }).join('');
+    return `<div class="vcol" style="min-width:70px"><div class="vtotal">${dia.total}</div><div class="vgroup">${barras}</div><div class="vday">${dd}/${m}</div></div>`;
   }).join('');
   chart.innerHTML = dias.length ? html : '<div style="color:var(--muted);font-size:13px;align-self:center;margin:auto">Sem produção no período selecionado.</div>';
   document.getElementById('vchart-legend').innerHTML = SETORES.map(s =>
