@@ -241,7 +241,7 @@
           <div class="field"><label>Turno</label><select id="prod-turno"><option value="T1">Turno 1 – Manhã</option><option value="T2">Turno 2 – Tarde</option><option value="T3">Turno 3 – Noite</option></select></div>
           <div class="field"><label>Setor</label><select id="prod-setor" onchange="toggleOperacao()"><option value="Impressão">Impressão (Plotter)</option><option value="Corte">Corte</option><option value="Prensa">Prensa (Calandra)</option><option value="Costura">Costura</option><option value="Arremate">Arremate</option></select></div>
           <div class="field"><label>Colaborador</label><select id="prod-colab"></select></div>
-          <div class="field" id="prod-operacao-field" style="display:none"><label>Operação (Costura)</label><select id="prod-operacao"><option value="Overloque">Overloque — soma volume</option><option value="Colarete">Colarete — não soma volume</option></select></div>
+          <div class="field" id="prod-operacao-field" style="display:none"><label>Operação (Costura)</label><select id="prod-operacao"><option value="Overloque">Overloque — soma volume</option><option value="Colarete">Colarete (Bainha) — não soma volume</option></select></div>
         </div>
         <div class="form-grid form-grid-5">
           <div class="field"><label>Tipo de Peça</label><select id="prod-tipo-peca" onchange="onPecaChange('prod')"></select></div>
@@ -392,12 +392,19 @@
       <div class="rank-grid">
         <div class="table-panel" style="margin-bottom:0">
           <div class="table-header"><h3>🏆 Ranking — Profissionais</h3></div>
-          <table><thead><tr><th>#</th><th>Colaborador</th><th>Peças</th><th>Lançamentos</th></tr></thead><tbody id="tbody-rank-colab"></tbody></table>
+          <table><thead><tr><th>#</th><th>Colaborador</th><th>Peças (Volume)</th><th>Colarete (Bainha)</th><th>Lançamentos</th></tr></thead><tbody id="tbody-rank-colab"></tbody></table>
         </div>
         <div class="table-panel" style="margin-bottom:0">
           <div class="table-header"><h3>🏭 Ranking — Setores (Produção)</h3></div>
           <table><thead><tr><th>#</th><th>Setor</th><th>Peças</th><th>Lançamentos</th></tr></thead><tbody id="tbody-rank-setor"></tbody></table>
         </div>
+      </div>
+      <div class="table-panel">
+        <div class="table-header"><h3>🧵 Bainha na Colarete — Volume Diário por Costureira</h3></div>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Data</th><th>Turno</th><th>Costureira</th><th>Linha / Peça</th><th>Peças na Colarete</th></tr></thead>
+          <tbody id="tbody-colarete"></tbody>
+        </table></div>
       </div>
       <div class="table-panel">
         <div class="table-header"><h3>⚠️ Ranking — Desperdício e Retrabalho por Setor</h3></div>
@@ -897,18 +904,34 @@ function renderRelatorios(d) {
   document.getElementById('vchart-legend').innerHTML = SETORES.map(s =>
     `<div class="li"><div class="sw" style="background:${SETOR_CORES[s]}"></div>${s}</div>`).join('');
 
-  // ── Ranking profissionais ──
+  // ── Ranking profissionais (volume + colarete separado) ──
   const porColab = {};
   d.prods.forEach(r => {
-    if (!contaVolume(r)) return;
-    if (!porColab[r.colaborador]) porColab[r.colaborador] = { qtd:0, lanc:0 };
-    porColab[r.colaborador].qtd += r.qtd;
+    if (!porColab[r.colaborador]) porColab[r.colaborador] = { qtd:0, colarete:0, lanc:0 };
     porColab[r.colaborador].lanc++;
+    if (contaVolume(r)) porColab[r.colaborador].qtd += r.qtd;
+    else porColab[r.colaborador].colarete += r.qtd;
   });
   const rankColab = Object.entries(porColab).sort((a,b)=>b[1].qtd-a[1].qtd);
   document.getElementById('tbody-rank-colab').innerHTML = rankColab.length
-    ? rankColab.map((e,i) => `<tr><td class="rank-pos">${i+1}º</td><td class="bold">${esc(e[0])}</td><td class="mono bold">${e[1].qtd}</td><td class="mono">${e[1].lanc}</td></tr>`).join('')
-    : '<tr><td colspan="4" style="color:var(--muted)">Sem dados no período.</td></tr>';
+    ? rankColab.map((e,i) => `<tr><td class="rank-pos">${i+1}º</td><td class="bold">${esc(e[0])}</td><td class="mono bold">${e[1].qtd}</td><td class="mono" style="color:var(--purple)">${e[1].colarete||'—'}</td><td class="mono">${e[1].lanc}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="color:var(--muted)">Sem dados no período.</td></tr>';
+
+  // ── Bainha na Colarete — volume diário por costureira ──
+  const colaretes = d.prods.filter(r => r.setor === 'Costura' && r.operacao === 'Colarete')
+    .sort((a,b) => b.data.localeCompare(a.data) || (b.created_at||'').localeCompare(a.created_at||''));
+  const tbColarete = document.getElementById('tbody-colarete');
+  if (tbColarete) {
+    tbColarete.innerHTML = colaretes.length
+      ? colaretes.map(r => `<tr>
+          <td class="mono">${fmtDateBR(r.data)}</td>
+          <td class="mono">${esc(r.turno)}</td>
+          <td class="bold">${esc(r.colaborador)}</td>
+          <td>${esc(r.linha_nome)} / ${esc(cap(r.tipo_peca))}</td>
+          <td class="mono bold" style="color:var(--purple)">${r.qtd}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" style="color:var(--muted)">Nenhum lançamento de Colarete (Bainha) no período.</td></tr>';
+  }
 
   // ── Ranking setores (produção) ──
   const porSetorProd = {};
