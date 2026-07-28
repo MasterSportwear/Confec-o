@@ -9,7 +9,7 @@
   :root {
     --bg:#0f1117; --surface:#181c27; --surface2:#1e2436; --border:#252d42;
     --accent:#e8501a; --accent2:#f57c4a; --green:#2ecc71; --yellow:#f0c040;
-    --red:#e74c3c; --blue:#3b82f6; --purple:#a78bfa;
+    --red:#e74c3c; --blue:#3b82f6; --purple:#a78bfa; --cyan:#22d3ee;
     --text:#e8eaf0; --muted:#6b7694; --label:#9aa3c2;
     --mono:'DM Mono',monospace; --sans:'Inter',sans-serif;
   }
@@ -52,6 +52,7 @@
   .page-title p{font-size:13px;color:var(--muted)}
   .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
   .kpi-grid.g5{grid-template-columns:repeat(5,1fr)}
+  .kpi-grid.g6{grid-template-columns:repeat(6,1fr)}
   .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
   .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
   .kpi-card.accent::before{background:var(--accent)}
@@ -144,7 +145,7 @@
   .cad-add-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
   .cad-add-row .field{flex:1;min-width:110px}
   @media(max-width:900px){
-    .kpi-grid,.kpi-grid.g5{grid-template-columns:repeat(2,1fr)}
+    .kpi-grid,.kpi-grid.g5,.kpi-grid.g6{grid-template-columns:repeat(2,1fr)}
     .form-grid,.form-grid-4,.form-grid-5{grid-template-columns:1fr 1fr}
     .rank-grid,.cad-grid{grid-template-columns:1fr}
     nav{width:60px}
@@ -192,6 +193,7 @@
     <option value="Corte">Corte</option>
     <option value="Prensa">Prensa (Calandra)</option>
     <option value="Costura">Costura</option>
+    <option value="Bainha">Bainha</option>
     <option value="Arremate">Arremate</option>
   </select>
   <select id="filter-colab"><option value="">Todos os profissionais</option></select>
@@ -227,11 +229,12 @@
         <h1>Volume de Produção</h1>
         <p>Registre a produção por setor, colaborador e linha de produto. Totais por setor respeitam o filtro ativo.</p>
       </div>
-      <div class="kpi-grid g5">
+      <div class="kpi-grid g6">
         <div class="kpi-card accent"><div class="kpi-label">Impressão</div><div class="kpi-value" id="kpi-setor-Impressão">0</div><div class="kpi-sub">peças produzidas</div></div>
         <div class="kpi-card blue"><div class="kpi-label">Corte</div><div class="kpi-value" id="kpi-setor-Corte">0</div><div class="kpi-sub">peças produzidas</div></div>
         <div class="kpi-card yellow"><div class="kpi-label">Prensa (Calandra)</div><div class="kpi-value" id="kpi-setor-Prensa">0</div><div class="kpi-sub">peças produzidas</div></div>
         <div class="kpi-card green"><div class="kpi-label">Costura</div><div class="kpi-value" id="kpi-setor-Costura">0</div><div class="kpi-sub">peças produzidas</div></div>
+        <div class="kpi-card" style="border-top:3px solid var(--cyan)"><div class="kpi-label">Bainha</div><div class="kpi-value" id="kpi-setor-Bainha">0</div><div class="kpi-sub">peças produzidas</div></div>
         <div class="kpi-card gray"><div class="kpi-label">Arremate</div><div class="kpi-value" id="kpi-setor-Arremate">0</div><div class="kpi-sub">peças produzidas</div></div>
       </div>
       <div class="form-panel">
@@ -239,7 +242,7 @@
         <div class="form-grid form-grid-5">
           <div class="field"><label>Data</label><input type="date" id="prod-data"></div>
           <div class="field"><label>Turno</label><select id="prod-turno"><option value="T1">Turno 1 – Manhã</option><option value="T2">Turno 2 – Tarde</option><option value="T3">Turno 3 – Noite</option></select></div>
-          <div class="field"><label>Setor</label><select id="prod-setor" onchange="toggleOperacao()"><option value="Impressão">Impressão (Plotter)</option><option value="Corte">Corte</option><option value="Prensa">Prensa (Calandra)</option><option value="Costura">Costura</option><option value="Arremate">Arremate</option></select></div>
+          <div class="field"><label>Setor</label><select id="prod-setor" onchange="toggleOperacao()"><option value="Impressão">Impressão (Plotter)</option><option value="Corte">Corte</option><option value="Prensa">Prensa (Calandra)</option><option value="Costura">Costura</option><option value="Bainha">Bainha</option><option value="Arremate">Arremate</option></select></div>
           <div class="field"><label>Colaborador</label><select id="prod-colab"></select></div>
           <div class="field" id="prod-operacao-field" style="display:none"><label>Operação (Costura)</label><select id="prod-operacao"><option value="Overloque">Overloque — soma volume</option><option value="Colarete">Colarete (Bainha) — não soma volume</option></select></div>
         </div>
@@ -250,10 +253,11 @@
           <div class="field"><label>Qtd. Produzidas</label><input type="number" id="prod-qtd" placeholder="0" min="0"></div>
           <div class="field"><label>Qtd. com Defeito</label><input type="number" id="prod-defeito" placeholder="0" min="0"></div>
         </div>
-        <div class="info-box" style="margin-bottom:16px">💡 <strong>Costura:</strong> ao lançar Overloque e Colarete das mesmas peças, apenas o <strong>Overloque soma no volume</strong>. O Colarete registra o tempo/atividade da colaboradora sem duplicar a contagem.</div>
+        <div class="info-box" style="margin-bottom:16px">💡 <strong>Costura:</strong> ao lançar Overloque e Colarete das mesmas peças, apenas o <strong>Overloque soma no volume</strong>. O Colarete registra o tempo/atividade da colaboradora sem duplicar a contagem.<br>💡 <strong>Bainha:</strong> tanto <strong>Bainha</strong> quanto <strong>Elastiqueira</strong> somam volume normalmente — são duas formas de produzir a mesma etapa.</div>
         <div class="form-actions">
+          <button class="btn btn-ghost" id="prod-cancel-edit" style="display:none" onclick="cancelarEdicao('producao')">Cancelar Edição</button>
           <button class="btn btn-ghost" onclick="limparProd()">Limpar</button>
-          <button class="btn btn-primary" onclick="registrarProducao()">Salvar Registro</button>
+          <button class="btn btn-primary" id="prod-btn-save" onclick="registrarProducao()">Salvar Registro</button>
         </div>
       </div>
       <div class="table-panel">
@@ -300,8 +304,9 @@
           <div class="cp-item"><div class="cp-label">CUSTO / PEÇA</div><div class="cp-val total" id="prev-por-peca">R$ 0,00</div></div>
         </div>
         <div class="form-actions">
+          <button class="btn btn-ghost" id="mp-cancel-edit" style="display:none" onclick="cancelarEdicao('materia_prima')">Cancelar Edição</button>
           <button class="btn btn-ghost" onclick="limparMP()">Limpar</button>
-          <button class="btn btn-primary" onclick="registrarMP()">Salvar Registro</button>
+          <button class="btn btn-primary" id="mp-btn-save" onclick="registrarMP()">Salvar Registro</button>
         </div>
       </div>
       <div class="table-panel">
@@ -333,7 +338,7 @@
         <div class="form-grid form-grid-5">
           <div class="field"><label>Data</label><input type="date" id="desp-data"></div>
           <div class="field"><label>Turno</label><select id="desp-turno"><option value="T1">Turno 1 – Manhã</option><option value="T2">Turno 2 – Tarde</option><option value="T3">Turno 3 – Noite</option></select></div>
-          <div class="field"><label>Setor de Origem</label><select id="desp-setor" onchange="calcularCustoDesp()"><option value="Impressão">Impressão (Plotter)</option><option value="Corte">Corte</option><option value="Prensa">Prensa (Calandra)</option><option value="Costura">Costura</option><option value="Arremate">Arremate</option></select></div>
+          <div class="field"><label>Setor de Origem</label><select id="desp-setor" onchange="calcularCustoDesp()"><option value="Impressão">Impressão (Plotter)</option><option value="Corte">Corte</option><option value="Prensa">Prensa (Calandra)</option><option value="Costura">Costura</option><option value="Bainha">Bainha</option><option value="Arremate">Arremate</option></select></div>
           <div class="field"><label>Colaborador</label><select id="desp-colab"></select></div>
           <div class="field"><label>Peça Base</label><select id="desp-tipo-peca" onchange="onPecaChange('desp')"></select></div>
         </div>
@@ -343,25 +348,28 @@
           <div class="field"><label>Tipo de Defeito</label><select id="desp-tipo-defeito"><option>Impressão borrada / falha</option><option>Sublimação com cor errada</option><option>Corte fora de medida</option><option>Prensa com marca / bolha</option><option>Costura soltando</option><option>Costura torta</option><option>Acabamento irregular</option><option>Mancha / sujeira</option><option>Outro</option></select></div>
           <div class="field"><label>Qtd. de Componentes</label><input type="number" id="desp-qtd" placeholder="0" min="1" oninput="calcularCustoDesp()"></div>
         </div>
-        <div class="form-grid">
+        <div class="form-grid form-grid-4">
+          <div class="field"><label>Nº do Par / OS</label><input type="text" id="desp-paros" placeholder="Ex: OS-2026-0341"></div>
           <div class="field"><label>Papel Sublimático</label><select id="desp-papel" onchange="calcularCustoDesp()"><option value="1.60">64g — R$1,60/m</option><option value="2.00">74g — R$2,00/m</option></select></div>
           <div class="field"><label>Destino da Peça</label><select id="desp-destino"><option>Retrabalho / Reposição</option><option>Descarte Total</option><option>Segunda Linha</option></select></div>
           <div class="field"><label>Observações</label><input type="text" id="desp-obs" placeholder="Detalhes da ocorrência (opcional)"></div>
         </div>
+        <div class="info-box" style="margin-bottom:16px">💡 O <strong>Par/OS</strong> identifica a reposição — várias ocorrências podem pertencer ao mesmo número de Par, já que ele representa a OS e não uma ocorrência única.</div>
         <div class="custo-preview">
           <div class="cp-item"><div class="cp-label">Componentes perdidos</div><div class="cp-val" id="desp-prev-desc" style="font-size:12px;color:var(--label)">—</div></div>
           <div class="cp-item" style="margin-left:auto"><div class="cp-label">CUSTO DO DESPERDÍCIO</div><div class="cp-val total" id="desp-prev-total">R$ 0,00</div></div>
           <div class="cp-item"><div class="cp-label">CUSTO / UNID.</div><div class="cp-val total" id="desp-prev-por-peca">R$ 0,00</div></div>
         </div>
         <div class="form-actions">
+          <button class="btn btn-ghost" id="desp-cancel-edit" style="display:none" onclick="cancelarEdicao('desperdicio')">Cancelar Edição</button>
           <button class="btn btn-ghost" onclick="limparDesp()">Limpar</button>
-          <button class="btn btn-primary" onclick="registrarDesp()">Registrar Ocorrência</button>
+          <button class="btn btn-primary" id="desp-btn-save" onclick="registrarDesp()">Registrar Ocorrência</button>
         </div>
       </div>
       <div class="table-panel">
         <div class="table-header"><h3>Ocorrências Registradas</h3></div>
         <div class="table-scroll"><table>
-          <thead><tr><th>Data · Turno</th><th>Setor</th><th>Colaborador</th><th>Linha / Componente</th><th>Defeito</th><th>Qtd.</th><th>Perdas</th><th>Custo</th><th>Destino</th><th>Obs.</th><th></th></tr></thead>
+          <thead><tr><th>Data · Turno</th><th>Par/OS</th><th>Setor</th><th>Colaborador</th><th>Linha / Componente</th><th>Defeito</th><th>Qtd.</th><th>Perdas</th><th>Custo</th><th>Destino</th><th>Obs.</th><th></th></tr></thead>
           <tbody id="tbody-desperdicio"></tbody>
         </table></div>
       </div>
@@ -374,9 +382,9 @@
         <p>Análises do período filtrado. Use a barra de filtros acima para escolher datas, turno, setor ou profissional.</p>
       </div>
       <div class="kpi-grid">
-        <div class="kpi-card accent"><div class="kpi-label">Média Diária Geral</div><div class="kpi-value" id="rel-media-diaria">0</div><div class="kpi-sub">soma dos setores · meta 400/setor</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">Média Semanal Geral</div><div class="kpi-value" id="rel-media-semanal">0</div><div class="kpi-sub">soma dos setores</div></div>
-        <div class="kpi-card green"><div class="kpi-label">Total no Período</div><div class="kpi-value" id="rel-total-periodo">0</div><div class="kpi-sub">peças produzidas</div></div>
+        <div class="kpi-card accent"><div class="kpi-label">Média Diária Geral</div><div class="kpi-value" id="rel-media-diaria">0</div><div class="kpi-sub">peças finalizadas (Arremate)/dia</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Média Semanal Geral</div><div class="kpi-value" id="rel-media-semanal">0</div><div class="kpi-sub">peças finalizadas (Arremate)/semana</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Total no Período</div><div class="kpi-value" id="rel-total-periodo">0</div><div class="kpi-sub">peças finalizadas (Arremate)</div></div>
         <div class="kpi-card yellow"><div class="kpi-label">Metas Batidas</div><div class="kpi-value" id="rel-dias-meta">0/0</div><div class="kpi-sub">setor-dias com ≥ 400 peças</div></div>
       </div>
       <div class="chart-panel" style="padding:16px 24px">
@@ -423,7 +431,7 @@
       </div>
       <div class="kpi-grid">
         <div class="kpi-card accent"><div class="kpi-label">Total de Registros</div><div class="kpi-value" id="kpi-hist-total">0</div><div class="kpi-sub">lançamentos</div></div>
-        <div class="kpi-card green"><div class="kpi-label">Peças Produzidas</div><div class="kpi-value" id="kpi-hist-prod">0</div><div class="kpi-sub">volume (sem dupla contagem)</div></div>
+        <div class="kpi-card green"><div class="kpi-label">Peças Produzidas</div><div class="kpi-value" id="kpi-hist-prod">0</div><div class="kpi-sub">peças finalizadas (Arremate)</div></div>
         <div class="kpi-card yellow"><div class="kpi-label">Custo Total MP</div><div class="kpi-value" id="kpi-hist-mp">R$0,00</div><div class="kpi-sub">matéria-prima</div></div>
         <div class="kpi-card blue"><div class="kpi-label">Custo Desperdício</div><div class="kpi-value" id="kpi-hist-desp">R$0,00</div><div class="kpi-sub">perdas registradas</div></div>
       </div>
@@ -524,18 +532,27 @@ async function sbDelete(table, id) {
     return res.ok;
   } catch(e) { return false; }
 }
+async function sbUpdate(table, id, row) {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers:{...SB_HEADERS,'Prefer':'return=representation'}, body: JSON.stringify(row) });
+    if (!res.ok) { console.error('SB update', await res.text()); return null; }
+    const data = await res.json();
+    return Array.isArray(data) ? data[0] : data;
+  } catch(e) { console.error(e); return null; }
+}
 
 // ============================================================
 // ESTADO GLOBAL
 // ============================================================
-const SETORES = ['Impressão','Corte','Prensa','Costura','Arremate'];
-const SETOR_CORES = { 'Impressão':'var(--accent)', 'Corte':'var(--blue)', 'Prensa':'var(--yellow)', 'Costura':'var(--green)', 'Arremate':'var(--muted)' };
+const SETORES = ['Impressão','Corte','Prensa','Costura','Bainha','Arremate'];
+const SETOR_CORES = { 'Impressão':'var(--accent)', 'Corte':'var(--blue)', 'Prensa':'var(--yellow)', 'Costura':'var(--green)', 'Bainha':'var(--cyan)', 'Arremate':'var(--muted)' };
 const PRECO_CALANDRA_M = 0.80;
 const META_DIARIA = 400;
 const todayISO = new Date().toISOString().split('T')[0];
 
 let CONFIG = { colaboradores:[], tecidos:[], pecas:[], linhas:[] };
 let G = { prods:[], mps:[], desps:[] };
+let editState = { producao:null, materia_prima:null, desperdicio:null }; // guarda o id em edição, ou null
 
 // Um registro de Costura/Colarete não soma no volume (evita dupla contagem)
 function contaVolume(r) { return !(r.setor === 'Costura' && r.operacao === 'Colarete'); }
@@ -603,6 +620,7 @@ function custoDesperdicioSetor(setor, linhaNome, pecaNome, precoSubli) {
     case 'Corte':     return { desc:'Tecido', valor: c.tecido };
     case 'Prensa':    return { desc:'Tinta + Subli + Calandra + Tecido', valor: c.tinta + c.papel + c.calandra + c.tecido };
     case 'Costura':
+    case 'Bainha':
     case 'Arremate':  return { desc:'Tecido + Subli + Tinta + Calandra', valor: c.tecido + c.papel + c.tinta + c.calandra };
     default:          return { desc:'—', valor: 0 };
   }
@@ -650,13 +668,32 @@ function matchRow(r, f, temSetor, temColab) {
   if (f.colab && temColab && r.colaborador !== f.colab) return false;
   return true;
 }
+
+// Segunda-feira da semana da data informada (ISO, semana começa na segunda)
+function getMondayISO(d) {
+  const day = d.getDay(); // 0=Dom .. 6=Sáb
+  const diff = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+  return monday.toISOString().split('T')[0];
+}
+
 function getFiltered() {
   const f = getFilter();
+  const manualDate = !!(f.from || f.to); // usuário escolheu datas explicitamente
+  let effFrom = f.from, effTo = f.to;
+  if (!manualDate) {
+    // Janela padrão: da segunda-feira desta semana até hoje. Reinicia sozinha toda segunda.
+    const now = new Date();
+    effFrom = getMondayISO(now);
+    effTo   = now.toISOString().split('T')[0];
+  }
+  const effF = { ...f, from: effFrom, to: effTo };
   return {
-    f,
-    prods: G.prods.filter(r => matchRow(r, f, true, true)),
-    mps:   G.mps.filter(r => matchRow(r, f, false, false)),
-    desps: G.desps.filter(r => matchRow(r, f, true, true)),
+    f, manualDate, effFrom, effTo,
+    prods: G.prods.filter(r => matchRow(r, effF, true, true)),
+    mps:   G.mps.filter(r => matchRow(r, effF, false, false)),
+    desps: G.desps.filter(r => matchRow(r, effF, true, true)),
   };
 }
 function applyFilters(silent) {
@@ -665,7 +702,11 @@ function applyFilters(silent) {
   document.getElementById('filterActiveBadge').classList.toggle('visible', !!hasFilter);
   const total = G.prods.length + G.mps.length + G.desps.length;
   const visible = d.prods.length + d.mps.length + d.desps.length;
-  document.getElementById('filterResultInfo').textContent = hasFilter ? `${visible} de ${total} registros` : '';
+  if (hasFilter) {
+    document.getElementById('filterResultInfo').textContent = `${visible} de ${total} registros`;
+  } else {
+    document.getElementById('filterResultInfo').textContent = `Exibindo: ${fmtDateBR(d.effFrom)} → ${fmtDateBR(d.effTo)} (semana atual · atualiza toda segunda)`;
+  }
   renderAll(d);
   if (hasFilter && !silent) {
     let parts = [];
@@ -681,9 +722,8 @@ function applyFilters(silent) {
 function clearFilters() {
   ['filter-date-from','filter-date-to','filter-turno','filter-setor','filter-colab'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('filterActiveBadge').classList.remove('visible');
-  document.getElementById('filterResultInfo').textContent = '';
-  renderAll(getFiltered());
-  showToast('Filtros limpos');
+  applyFilters(true);
+  showToast('Filtros limpos — exibindo a semana atual (segunda até hoje)');
 }
 function showSection(id, el) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -729,7 +769,7 @@ function renderProducao(d) {
       <td class="mono bold">${r.qtd}</td>
       <td class="mono">${r.defeitos}</td>
       <td>${st}</td>
-      <td><button class="btn-del" onclick="excluirRegistro('producao', ${r.id})" title="Excluir">✕</button></td>
+      <td><button class="btn-del" style="border-color:rgba(59,130,246,.3);color:var(--blue)" onclick="editarProducao(${r.id})" title="Editar">✎</button> <button class="btn-del" onclick="excluirRegistro('producao', ${r.id})" title="Excluir">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -757,7 +797,7 @@ function renderMP(d) {
     <td class="mono">${fmt(r.custo_calandra)}</td>
     <td class="mono bold" style="color:var(--accent2)">${fmt(r.custo_total)}</td>
     <td class="mono">${fmt(r.custo_por_peca)}</td>
-    <td><button class="btn-del" onclick="excluirRegistro('materia_prima', ${r.id})" title="Excluir">✕</button></td>
+    <td><button class="btn-del" style="border-color:rgba(59,130,246,.3);color:var(--blue)" onclick="editarMP(${r.id})" title="Editar">✎</button> <button class="btn-del" onclick="excluirRegistro('materia_prima', ${r.id})" title="Excluir">✕</button></td>
   </tr>`).join('');
 }
 
@@ -781,6 +821,7 @@ function renderDesp(d) {
       : '<span class="badge badge-gray">2ª Linha</span>';
     return `<tr>
       <td class="mono">${fmtDataLabel(r.data, r.turno)}</td>
+      <td class="mono">${esc(r.par_os)||'—'}</td>
       <td class="bold">${esc(r.setor)}</td>
       <td>${esc(r.colaborador)}</td>
       <td>${esc(r.linha_nome)} / ${esc(cap(r.tipo_peca))} · ${esc(r.componente_nome)}</td>
@@ -790,7 +831,7 @@ function renderDesp(d) {
       <td class="mono bold" style="color:var(--red)">${fmt(r.custo_total)}</td>
       <td>${db}</td>
       <td style="font-size:11px;max-width:140px" title="${esc(r.observacoes)}">${esc(r.observacoes)||'—'}</td>
-      <td><button class="btn-del" onclick="excluirRegistro('desperdicio', ${r.id})" title="Excluir">✕</button></td>
+      <td><button class="btn-del" style="border-color:rgba(59,130,246,.3);color:var(--blue)" onclick="editarDesp(${r.id})" title="Editar">✎</button> <button class="btn-del" onclick="excluirRegistro('desperdicio', ${r.id})" title="Excluir">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -799,7 +840,8 @@ function renderHistorico(d) {
   let prodVol = 0, custoMP = 0, custoDesp = 0;
   const rows = [];
   d.prods.forEach(r => {
-    if (contaVolume(r)) prodVol += r.qtd;
+    // Só conta como "peça produzida" (finalizada) o que já passou pelo Arremate
+    if (r.setor === 'Arremate') prodVol += r.qtd;
     rows.push({ data:r.data, turno:r.turno, ord:r.created_at, badge:'<span class="badge badge-blue">Produção</span>', setor:r.setor, colab:r.colaborador,
       desc:`${r.qtd} peças — ${esc(r.linha_nome)} (${esc(cap(r.tipo_peca))})${r.operacao ? ' · '+esc(r.operacao) : ''}`, qtd:r.qtd, custo:'—' });
   });
@@ -847,10 +889,18 @@ function renderRelatorios(d) {
     porDia[r.data].setores[r.setor] = (porDia[r.data].setores[r.setor]||0) + r.qtd;
   });
   const dias = Object.keys(porDia).sort();
-  const totalPeriodo = dias.reduce((a,dt)=>a+porDia[dt].total, 0);
-  const mediaDiaria = dias.length ? Math.round(totalPeriodo/dias.length) : 0;
-  const semanas = [...new Set(dias.map(isoWeek))];
-  const mediaSemanal = semanas.length ? Math.round(totalPeriodo/semanas.length) : 0;
+
+  // "Total no Período", "Média Diária" e "Média Semanal" contam SOMENTE peças
+  // que já passaram pelo Arremate — só ali a peça está de fato pronta.
+  const porDiaArremate = {};
+  d.prods.filter(r => r.setor === 'Arremate').forEach(r => {
+    porDiaArremate[r.data] = (porDiaArremate[r.data]||0) + r.qtd;
+  });
+  const diasArremate = Object.keys(porDiaArremate).sort();
+  const totalPeriodo = diasArremate.reduce((a,dt)=>a+porDiaArremate[dt], 0);
+  const mediaDiaria = diasArremate.length ? Math.round(totalPeriodo/diasArremate.length) : 0;
+  const semanasArremate = [...new Set(diasArremate.map(isoWeek))];
+  const mediaSemanal = semanasArremate.length ? Math.round(totalPeriodo/semanasArremate.length) : 0;
 
   // Setor-dias na meta: cada setor precisa bater 400 por dia
   let metasBatidas = 0, metasTotais = 0;
@@ -1006,7 +1056,20 @@ function onPecaChange(prefix) {
 
 function toggleOperacao() {
   const setor = document.getElementById('prod-setor').value;
-  document.getElementById('prod-operacao-field').style.display = setor === 'Costura' ? '' : 'none';
+  const field = document.getElementById('prod-operacao-field');
+  const sel   = document.getElementById('prod-operacao');
+  const label = field.querySelector('label');
+  if (setor === 'Costura') {
+    field.style.display = '';
+    label.textContent = 'Operação (Costura)';
+    sel.innerHTML = `<option value="Overloque">Overloque — soma volume</option><option value="Colarete">Colarete (Bainha) — não soma volume</option>`;
+  } else if (setor === 'Bainha') {
+    field.style.display = '';
+    label.textContent = 'Operação (Bainha)';
+    sel.innerHTML = `<option value="Bainha">Bainha — soma volume</option><option value="Elastiqueira">Elastiqueira — soma volume</option>`;
+  } else {
+    field.style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -1065,7 +1128,7 @@ async function registrarProducao() {
   const qtd   = parseInt(document.getElementById('prod-qtd').value)||0;
   const def   = parseInt(document.getElementById('prod-defeito').value)||0;
   const ps    = parseFloat(document.getElementById('prod-papel').value)||1.60;
-  const operacao = setor === 'Costura' ? document.getElementById('prod-operacao').value : '';
+  const operacao = (setor === 'Costura' || setor === 'Bainha') ? document.getElementById('prod-operacao').value : '';
 
   if (!colab) { showToast('Selecione o colaborador.'); return; }
   if (!qtd)   { showToast('Informe a quantidade produzida.'); return; }
@@ -1074,26 +1137,41 @@ async function registrarProducao() {
   const linhaNome = `${linha} (${tecNome||'—'})`;
   const taxa = def/qtd;
   const status = taxa === 0 ? 'OK' : taxa < 0.05 ? 'Atenção' : 'Crítico';
+  const row = { data, turno, setor, colaborador:colab, tipo_peca:peca, linha, linha_nome:linhaNome, qtd, defeitos:def, status, operacao };
 
   mostrarLoader(true);
-  const saved = await sbInsert('producao', { data, turno, setor, colaborador:colab, tipo_peca:peca, linha, linha_nome:linhaNome, qtd, defeitos:def, status, operacao });
+
+  if (editState.producao) {
+    // MODO EDIÇÃO — apenas atualiza o registro (não recalcula MP automático)
+    const updated = await sbUpdate('producao', editState.producao, row);
+    mostrarLoader(false);
+    if (!updated) { showToast('Erro ao atualizar.'); return; }
+    const idx = G.prods.findIndex(r=>r.id===editState.producao);
+    if (idx>=0) G.prods[idx] = updated;
+    renderAll();
+    cancelarEdicao('producao');
+    showToast('Registro de produção atualizado!');
+    return;
+  }
+
+  const saved = await sbInsert('producao', row);
   if (!saved) { mostrarLoader(false); showToast('Erro ao salvar. Rodou o SQL v2 no Supabase?'); return; }
   G.prods.unshift(saved);
 
-  // Auto-MP
+  // Auto-MP (só em novo lançamento, não em edição)
   if (setor === 'Impressão' || setor === 'Prensa') {
     const c = custoPorPeca(linha, peca, ps);
-    let row = null;
+    let mpRow = null;
     if (setor === 'Impressão') {
       const cs = c.papel*qtd, ct = c.tinta*qtd;
-      row = { data, turno, tipo_peca:peca, linha, linha_nome:linhaNome, os:`AUTO-IMP · ${turno}`, qtd, kg_manual:0, preco_subli:ps,
+      mpRow = { data, turno, tipo_peca:peca, linha, linha_nome:linhaNome, os:`AUTO-IMP · ${turno}`, qtd, kg_manual:0, preco_subli:ps,
         custo_tecido:0, custo_subli:cs, custo_tinta:ct, custo_calandra:0, custo_total:cs+ct, custo_por_peca:(cs+ct)/qtd };
     } else {
       const cte = c.tecido*qtd, cc = c.calandra*qtd;
-      row = { data, turno, tipo_peca:peca, linha, linha_nome:linhaNome, os:`AUTO-PRENSA · ${turno}`, qtd, kg_manual:0, preco_subli:ps,
+      mpRow = { data, turno, tipo_peca:peca, linha, linha_nome:linhaNome, os:`AUTO-PRENSA · ${turno}`, qtd, kg_manual:0, preco_subli:ps,
         custo_tecido:cte, custo_subli:0, custo_tinta:0, custo_calandra:cc, custo_total:cte+cc, custo_por_peca:(cte+cc)/qtd };
     }
-    const savedMP = await sbInsert('materia_prima', row);
+    const savedMP = await sbInsert('materia_prima', mpRow);
     if (savedMP) G.mps.unshift(savedMP);
   }
   mostrarLoader(false);
@@ -1118,9 +1196,24 @@ async function registrarMP() {
   const cs = c.papel*qtd, ct = c.tinta*qtd, cc = c.calandra*qtd;
   const total = custoTecido + cs + ct + cc;
   const tecNome = getTecidoDaLinha(linha, peca);
+  const row = { data, turno, tipo_peca:peca, linha, linha_nome:`${linha} (${tecNome||'—'})`, os, qtd, kg_manual:kg, preco_subli:ps,
+    custo_tecido:custoTecido, custo_subli:cs, custo_tinta:ct, custo_calandra:cc, custo_total:total, custo_por_peca:qtd>0?total/qtd:0 };
+
   mostrarLoader(true);
-  const saved = await sbInsert('materia_prima', { data, turno, tipo_peca:peca, linha, linha_nome:`${linha} (${tecNome||'—'})`, os, qtd, kg_manual:kg, preco_subli:ps,
-    custo_tecido:custoTecido, custo_subli:cs, custo_tinta:ct, custo_calandra:cc, custo_total:total, custo_por_peca:qtd>0?total/qtd:0 });
+
+  if (editState.materia_prima) {
+    const updated = await sbUpdate('materia_prima', editState.materia_prima, row);
+    mostrarLoader(false);
+    if (!updated) { showToast('Erro ao atualizar.'); return; }
+    const idx = G.mps.findIndex(r=>r.id===editState.materia_prima);
+    if (idx>=0) G.mps[idx] = updated;
+    renderAll();
+    cancelarEdicao('materia_prima');
+    showToast('Registro de MP atualizado!');
+    return;
+  }
+
+  const saved = await sbInsert('materia_prima', row);
   mostrarLoader(false);
   if (!saved) { showToast('Erro ao salvar.'); return; }
   G.mps.unshift(saved);
@@ -1141,6 +1234,7 @@ async function registrarDesp() {
   const defeito = document.getElementById('desp-tipo-defeito').value;
   const destino = document.getElementById('desp-destino').value;
   const obs   = document.getElementById('desp-obs').value||'';
+  const parOs = document.getElementById('desp-paros').value||'';
   if (!colab) { showToast('Selecione o colaborador.'); return; }
   if (!qtd)   { showToast('Informe a quantidade afetada.'); return; }
   const selComp = document.getElementById('desp-componente');
@@ -1152,10 +1246,25 @@ async function registrarDesp() {
   const total = unit * qtd;
   const tecNome = getTecidoDaLinha(linha, peca);
   const compDesc = `${d.desc} · ${compNome} (${pct}%)`;
-  mostrarLoader(true);
-  const saved = await sbInsert('desperdicio', { data, turno, setor, colaborador:colab, tipo_peca:peca, componente:compVal, componente_nome:compNome,
+  const row = { data, turno, setor, colaborador:colab, tipo_peca:peca, componente:compVal, componente_nome:compNome,
     linha, linha_nome:`${linha} (${tecNome||'—'})`, tipo_defeito:defeito, qtd, preco_subli:ps, componentes_perdidos:compDesc,
-    custo_total:total, custo_por_peca:unit, destino, observacoes:obs });
+    custo_total:total, custo_por_peca:unit, destino, observacoes:obs, par_os:parOs };
+
+  mostrarLoader(true);
+
+  if (editState.desperdicio) {
+    const updated = await sbUpdate('desperdicio', editState.desperdicio, row);
+    mostrarLoader(false);
+    if (!updated) { showToast('Erro ao atualizar.'); return; }
+    const idx = G.desps.findIndex(r=>r.id===editState.desperdicio);
+    if (idx>=0) G.desps[idx] = updated;
+    renderAll();
+    cancelarEdicao('desperdicio');
+    showToast('Ocorrência atualizada!');
+    return;
+  }
+
+  const saved = await sbInsert('desperdicio', row);
   mostrarLoader(false);
   if (!saved) { showToast('Erro ao salvar. Rodou o SQL v2 no Supabase?'); return; }
   G.desps.unshift(saved);
@@ -1175,6 +1284,106 @@ async function excluirRegistro(tabela, id) {
   if (tabela === 'desperdicio')   G.desps = G.desps.filter(r=>r.id!==id);
   renderAll();
   showToast('Registro excluído.');
+}
+
+// ============================================================
+// EDIÇÃO DE REGISTROS
+// ============================================================
+function navItemFor(secao) {
+  return [...document.querySelectorAll('.nav-item')].find(el => (el.getAttribute('onclick')||'').includes("showSection('"+secao+"'"));
+}
+
+function editarProducao(id) {
+  const r = G.prods.find(x=>x.id===id);
+  if (!r) return;
+  showSection('producao', navItemFor('producao'));
+  document.getElementById('prod-data').value  = r.data;
+  document.getElementById('prod-turno').value = r.turno;
+  document.getElementById('prod-setor').value = r.setor;
+  toggleOperacao();
+  document.getElementById('prod-tipo-peca').value = r.tipo_peca;
+  onPecaChange('prod');
+  document.getElementById('prod-linha').value = r.linha;
+  document.getElementById('prod-colab').value = r.colaborador;
+  document.getElementById('prod-qtd').value = r.qtd;
+  document.getElementById('prod-defeito').value = r.defeitos;
+  if (r.operacao) document.getElementById('prod-operacao').value = r.operacao;
+
+  editState.producao = id;
+  document.getElementById('prod-btn-save').textContent = 'Atualizar Registro';
+  document.getElementById('prod-cancel-edit').style.display = '';
+  window.scrollTo({top:0, behavior:'smooth'});
+  showToast('Editando registro — altere os campos e clique em Atualizar.');
+}
+
+function editarMP(id) {
+  const r = G.mps.find(x=>x.id===id);
+  if (!r) return;
+  showSection('materia', navItemFor('materia'));
+  document.getElementById('mp-data').value  = r.data;
+  document.getElementById('mp-turno').value = r.turno;
+  document.getElementById('mp-tipo-peca').value = r.tipo_peca;
+  onPecaChange('mp');
+  document.getElementById('mp-linha').value = r.linha;
+  document.getElementById('mp-qtd').value = r.qtd;
+  document.getElementById('mp-papel').value = r.preco_subli;
+  document.getElementById('mp-kg').value = r.kg_manual || '';
+  document.getElementById('mp-os').value = r.os || '';
+  calcularCustoMP();
+
+  editState.materia_prima = id;
+  document.getElementById('mp-btn-save').textContent = 'Atualizar Registro';
+  document.getElementById('mp-cancel-edit').style.display = '';
+  window.scrollTo({top:0, behavior:'smooth'});
+  showToast('Editando registro — altere os campos e clique em Atualizar.');
+}
+
+function editarDesp(id) {
+  const r = G.desps.find(x=>x.id===id);
+  if (!r) return;
+  showSection('desperdicio', navItemFor('desperdicio'));
+  document.getElementById('desp-data').value  = r.data;
+  document.getElementById('desp-turno').value = r.turno;
+  document.getElementById('desp-setor').value = r.setor;
+  document.getElementById('desp-colab').value = r.colaborador;
+  document.getElementById('desp-tipo-peca').value = r.tipo_peca;
+  onPecaChange('desp');
+  document.getElementById('desp-linha').value = r.linha;
+  document.getElementById('desp-componente').value = r.componente;
+  document.getElementById('desp-tipo-defeito').value = r.tipo_defeito;
+  document.getElementById('desp-qtd').value = r.qtd;
+  document.getElementById('desp-papel').value = r.preco_subli;
+  document.getElementById('desp-destino').value = r.destino;
+  document.getElementById('desp-obs').value = r.observacoes || '';
+  document.getElementById('desp-paros').value = r.par_os || '';
+  calcularCustoDesp();
+
+  editState.desperdicio = id;
+  document.getElementById('desp-btn-save').textContent = 'Atualizar Ocorrência';
+  document.getElementById('desp-cancel-edit').style.display = '';
+  window.scrollTo({top:0, behavior:'smooth'});
+  showToast('Editando registro — altere os campos e clique em Atualizar.');
+}
+
+function cancelarEdicao(tabela) {
+  if (tabela === 'producao') {
+    editState.producao = null;
+    document.getElementById('prod-btn-save').textContent = 'Salvar Registro';
+    document.getElementById('prod-cancel-edit').style.display = 'none';
+    limparProd();
+  }
+  if (tabela === 'materia_prima') {
+    editState.materia_prima = null;
+    document.getElementById('mp-btn-save').textContent = 'Salvar Registro';
+    document.getElementById('mp-cancel-edit').style.display = 'none';
+    limparMP();
+  }
+  if (tabela === 'desperdicio') {
+    editState.desperdicio = null;
+    document.getElementById('desp-btn-save').textContent = 'Registrar Ocorrência';
+    document.getElementById('desp-cancel-edit').style.display = 'none';
+    limparDesp();
+  }
 }
 
 // ============================================================
@@ -1198,6 +1407,7 @@ function limparDesp() {
   document.getElementById('desp-qtd').value = '';
   document.getElementById('desp-obs').value = '';
   document.getElementById('desp-colab').selectedIndex = 0;
+  // desp-paros NÃO é limpo de propósito — permite lançar várias ocorrências no mesmo Par/OS em sequência
   calcularCustoDesp();
 }
 
@@ -1318,7 +1528,7 @@ async function init() {
   renderCadastros();
   toggleOperacao();
   await carregarDados();
-  renderAll();
+  applyFilters(true);
   calcularCustoMP();
   calcularCustoDesp();
   mostrarLoader(false);
