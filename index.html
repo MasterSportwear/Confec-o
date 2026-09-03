@@ -253,7 +253,14 @@
           <div class="field"><label>Qtd. Produzidas</label><input type="number" id="prod-qtd" placeholder="0" min="0"></div>
           <div class="field"><label>Qtd. com Defeito</label><input type="number" id="prod-defeito" placeholder="0" min="0"></div>
         </div>
-        <div class="info-box" style="margin-bottom:16px">💡 <strong>Costura:</strong> ao lançar Overloque e Colarete das mesmas peças, apenas o <strong>Overloque soma no volume</strong>. O Colarete registra o tempo/atividade da colaboradora sem duplicar a contagem.<br>💡 <strong>Bainha:</strong> tanto <strong>Bainha</strong> quanto <strong>Elastiqueira</strong> somam volume normalmente — são duas formas de produzir a mesma etapa.</div>
+        <div class="form-grid form-grid-5" id="prod-calandra-fields" style="display:none">
+          <div class="field"><label>Nº da OS</label><input type="text" id="prod-os-numero" placeholder="Ex: OS-2026-0341"></div>
+          <div class="field"><label>Data de Entrega da OS</label><input type="date" id="prod-data-entrega"></div>
+          <div class="field"><label>Nº da Bobina</label><input type="text" id="prod-bobina" placeholder="Ex: 12"></div>
+          <div class="field"><label>Início</label><input type="time" id="prod-hora-inicio"></div>
+          <div class="field"><label>Término</label><input type="time" id="prod-hora-termino"></div>
+        </div>
+        <div class="info-box" style="margin-bottom:16px">💡 <strong>Costura:</strong> ao lançar Overloque e Colarete das mesmas peças, apenas o <strong>Overloque soma no volume</strong>. O Colarete registra o tempo/atividade da colaboradora sem duplicar a contagem.<br>💡 <strong>Bainha:</strong> tanto <strong>Bainha</strong> quanto <strong>Elastiqueira</strong> somam volume normalmente — são duas formas de produzir a mesma etapa.<br>💡 <strong>Prensa (Calandra):</strong> registre a OS, a bobina de papel Kraft utilizada e os horários de início/término — assim o sistema calcula o rendimento por bobina e o tempo de produção por OS.</div>
         <div class="form-actions">
           <button class="btn btn-ghost" id="prod-cancel-edit" style="display:none" onclick="cancelarEdicao('producao')">Cancelar Edição</button>
           <button class="btn btn-ghost" onclick="limparProd()">Limpar</button>
@@ -263,7 +270,7 @@
       <div class="table-panel">
         <div class="table-header"><h3>Registros de Produção</h3></div>
         <div class="table-scroll"><table>
-          <thead><tr><th>Data · Turno</th><th>Setor</th><th>Operação</th><th>Colaborador</th><th>Linha</th><th>Tipo</th><th>Produzidas</th><th>Defeitos</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Data · Turno</th><th>Setor</th><th>Operação</th><th>Colaborador</th><th>Linha</th><th>Tipo</th><th>Produzidas</th><th>Defeitos</th><th>OS / Bobina / Tempo</th><th>Status</th><th></th></tr></thead>
           <tbody id="tbody-producao"></tbody>
         </table></div>
       </div>
@@ -420,6 +427,30 @@
           <thead><tr><th>#</th><th>Setor</th><th>Ocorrências</th><th>Componentes Afetados</th><th>Retrabalho/Reposição</th><th>Descarte</th><th>Custo Total</th></tr></thead>
           <tbody id="tbody-rank-desp"></tbody>
         </table></div>
+      </div>
+
+      <div class="page-title" style="margin-top:8px">
+        <h1 style="font-size:17px">Prensa (Calandra) — Bobinas e Tempo de Produção</h1>
+        <p>Rendimento de peças por bobina de papel Kraft e tempo de produção por Ordem de Serviço.</p>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card accent"><div class="kpi-label">Peças por Bobina (média)</div><div class="kpi-value" id="rel-media-bobina">0</div><div class="kpi-sub">peças/bobina no período</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Tempo Médio por OS</div><div class="kpi-value" id="rel-tempo-medio-os" style="font-size:22px">—</div><div class="kpi-sub">início → término</div></div>
+        <div class="kpi-card green"><div class="kpi-label">OS Produzidas</div><div class="kpi-value" id="rel-qtd-os">0</div><div class="kpi-sub">na Prensa, no período</div></div>
+        <div class="kpi-card yellow"><div class="kpi-label">Bobinas Utilizadas</div><div class="kpi-value" id="rel-qtd-bobinas">0</div><div class="kpi-sub">distintas no período</div></div>
+      </div>
+      <div class="rank-grid">
+        <div class="table-panel" style="margin-bottom:0">
+          <div class="table-header"><h3>🎞️ Rendimento por Bobina</h3></div>
+          <table><thead><tr><th>Bobina</th><th>Peças Totais</th><th>Qtd. OS</th><th>Peças/OS (média)</th></tr></thead><tbody id="tbody-rank-bobina"></tbody></table>
+        </div>
+        <div class="table-panel" style="margin-bottom:0">
+          <div class="table-header"><h3>⏱️ Tempo de Produção por OS</h3></div>
+          <div class="table-scroll"><table>
+            <thead><tr><th>Data</th><th>OS</th><th>Entrega</th><th>Bobina</th><th>Peças</th><th>Início</th><th>Término</th><th>Duração</th></tr></thead>
+            <tbody id="tbody-tempo-os"></tbody>
+          </table></div>
+        </div>
       </div>
     </div>
 
@@ -633,6 +664,31 @@ function fmt(v) { const n = parseFloat(v); return 'R$ ' + (isNaN(n) ? '0,00' : n
 function fmtDataLabel(iso, turno) { if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m} · ${turno}`; }
 function fmtDateBR(iso) { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
 function cap(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+// Duração entre dois horários "HH:MM" em minutos (considera virada de turno após meia-noite)
+function calcDuracaoMin(inicio, termino) {
+  if (!inicio || !termino) return null;
+  const [h1,m1] = inicio.split(':').map(Number);
+  const [h2,m2] = termino.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if (mins < 0) mins += 24*60;
+  return mins;
+}
+function fmtMin(mins) {
+  if (mins == null || isNaN(mins)) return '—';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h > 0 ? `${h}h${String(m).padStart(2,'0')}` : `${m}min`;
+}
+// Rótulo compacto de OS/Bobina/Tempo para a tabela de Volume de Produção (só Prensa)
+function calandraInfoLabel(r) {
+  if (r.setor !== 'Prensa') return '—';
+  const partes = [];
+  if (r.os_numero) partes.push('OS ' + esc(r.os_numero));
+  if (r.bobina) partes.push('Bobina ' + esc(r.bobina));
+  const dur = calcDuracaoMin(r.hora_inicio, r.hora_termino);
+  if (dur != null) partes.push(fmtMin(dur));
+  return partes.length ? partes.join(' · ') : '—';
+}
 function esc(s) { return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -768,6 +824,7 @@ function renderProducao(d) {
       <td>${esc(cap(r.tipo_peca))}</td>
       <td class="mono bold">${r.qtd}</td>
       <td class="mono">${r.defeitos}</td>
+      <td style="font-size:11px">${calandraInfoLabel(r)}</td>
       <td>${st}</td>
       <td><button class="btn-del" style="border-color:rgba(59,130,246,.3);color:var(--blue)" onclick="editarProducao(${r.id})" title="Editar">✎</button> <button class="btn-del" onclick="excluirRegistro('producao', ${r.id})" title="Excluir">✕</button></td>
     </tr>`;
@@ -1019,6 +1076,55 @@ function renderRelatorios(d) {
         <td class="mono bold" style="color:var(--red)">${fmt(e[1].custo)}</td>
       </tr>`).join('')
     : '<tr><td colspan="7" style="color:var(--muted)">Sem ocorrências no período.</td></tr>';
+
+  // ── Prensa (Calandra): rendimento por bobina e tempo por OS ──
+  const prensaRows = d.prods.filter(r => r.setor === 'Prensa');
+
+  const porBobina = {};
+  prensaRows.forEach(r => {
+    if (!r.bobina) return;
+    if (!porBobina[r.bobina]) porBobina[r.bobina] = { pecas:0, osSet:new Set() };
+    porBobina[r.bobina].pecas += r.qtd;
+    if (r.os_numero) porBobina[r.bobina].osSet.add(r.os_numero);
+  });
+  const bobinaEntries = Object.entries(porBobina).sort((a,b)=>b[1].pecas-a[1].pecas);
+  const totalPecasBobina = bobinaEntries.reduce((a,e)=>a+e[1].pecas, 0);
+  const mediaBobina = bobinaEntries.length ? Math.round(totalPecasBobina/bobinaEntries.length) : 0;
+  document.getElementById('rel-media-bobina').textContent = mediaBobina;
+  document.getElementById('rel-qtd-bobinas').textContent  = bobinaEntries.length;
+  document.getElementById('tbody-rank-bobina').innerHTML = bobinaEntries.length
+    ? bobinaEntries.map(([b,info]) => `<tr>
+        <td class="bold">${esc(b)}</td>
+        <td class="mono bold">${info.pecas}</td>
+        <td class="mono">${info.osSet.size}</td>
+        <td class="mono">${info.osSet.size ? Math.round(info.pecas/info.osSet.size) : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="color:var(--muted)">Sem lançamentos de bobina no período.</td></tr>';
+
+  const osSetTotal = new Set();
+  prensaRows.forEach(r => { if (r.os_numero) osSetTotal.add(r.os_numero); });
+  document.getElementById('rel-qtd-os').textContent = osSetTotal.size;
+
+  const osTable = prensaRows.filter(r => r.hora_inicio && r.hora_termino)
+    .slice().sort((a,b) => b.data.localeCompare(a.data) || (b.hora_inicio||'').localeCompare(a.hora_inicio||''));
+  let somaMin = 0, contMin = 0;
+  document.getElementById('tbody-tempo-os').innerHTML = osTable.length
+    ? osTable.map(r => {
+        const dur = calcDuracaoMin(r.hora_inicio, r.hora_termino);
+        if (dur != null) { somaMin += dur; contMin++; }
+        return `<tr>
+          <td class="mono">${fmtDateBR(r.data)}</td>
+          <td>${esc(r.os_numero)||'—'}</td>
+          <td class="mono">${r.data_entrega_os ? fmtDateBR(r.data_entrega_os) : '—'}</td>
+          <td>${esc(r.bobina)||'—'}</td>
+          <td class="mono">${r.qtd}</td>
+          <td class="mono">${esc(r.hora_inicio)||'—'}</td>
+          <td class="mono">${esc(r.hora_termino)||'—'}</td>
+          <td class="mono bold">${fmtMin(dur)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" style="color:var(--muted)">Sem horários registrados no período.</td></tr>';
+  document.getElementById('rel-tempo-medio-os').textContent = contMin ? fmtMin(Math.round(somaMin/contMin)) : '—';
 }
 
 // ============================================================
@@ -1070,6 +1176,9 @@ function toggleOperacao() {
   } else {
     field.style.display = 'none';
   }
+  // Campos exclusivos da Prensa (Calandra): OS, bobina, horários
+  const calField = document.getElementById('prod-calandra-fields');
+  if (calField) calField.style.display = (setor === 'Prensa') ? '' : 'none';
 }
 
 // ============================================================
@@ -1130,6 +1239,13 @@ async function registrarProducao() {
   const ps    = parseFloat(document.getElementById('prod-papel').value)||1.60;
   const operacao = (setor === 'Costura' || setor === 'Bainha') ? document.getElementById('prod-operacao').value : '';
 
+  // Campos exclusivos da Prensa (Calandra)
+  const osNumero     = setor === 'Prensa' ? (document.getElementById('prod-os-numero').value||'') : '';
+  const bobina       = setor === 'Prensa' ? (document.getElementById('prod-bobina').value||'') : '';
+  const dataEntrega  = setor === 'Prensa' ? (document.getElementById('prod-data-entrega').value||null) : null;
+  const horaInicio   = setor === 'Prensa' ? (document.getElementById('prod-hora-inicio').value||null) : null;
+  const horaTermino  = setor === 'Prensa' ? (document.getElementById('prod-hora-termino').value||null) : null;
+
   if (!colab) { showToast('Selecione o colaborador.'); return; }
   if (!qtd)   { showToast('Informe a quantidade produzida.'); return; }
 
@@ -1137,7 +1253,8 @@ async function registrarProducao() {
   const linhaNome = `${linha} (${tecNome||'—'})`;
   const taxa = def/qtd;
   const status = taxa === 0 ? 'OK' : taxa < 0.05 ? 'Atenção' : 'Crítico';
-  const row = { data, turno, setor, colaborador:colab, tipo_peca:peca, linha, linha_nome:linhaNome, qtd, defeitos:def, status, operacao };
+  const row = { data, turno, setor, colaborador:colab, tipo_peca:peca, linha, linha_nome:linhaNome, qtd, defeitos:def, status, operacao,
+    os_numero:osNumero, bobina, data_entrega_os:dataEntrega, hora_inicio:horaInicio, hora_termino:horaTermino };
 
   mostrarLoader(true);
 
@@ -1308,6 +1425,13 @@ function editarProducao(id) {
   document.getElementById('prod-qtd').value = r.qtd;
   document.getElementById('prod-defeito').value = r.defeitos;
   if (r.operacao) document.getElementById('prod-operacao').value = r.operacao;
+  if (r.setor === 'Prensa') {
+    document.getElementById('prod-os-numero').value    = r.os_numero || '';
+    document.getElementById('prod-bobina').value       = r.bobina || '';
+    document.getElementById('prod-data-entrega').value = r.data_entrega_os || '';
+    document.getElementById('prod-hora-inicio').value  = r.hora_inicio || '';
+    document.getElementById('prod-hora-termino').value = r.hora_termino || '';
+  }
 
   editState.producao = id;
   document.getElementById('prod-btn-save').textContent = 'Atualizar Registro';
@@ -1394,6 +1518,11 @@ function limparProd() {
   document.getElementById('prod-qtd').value = '';
   document.getElementById('prod-defeito').value = '';
   document.getElementById('prod-colab').selectedIndex = 0;
+  document.getElementById('prod-os-numero').value = '';
+  document.getElementById('prod-bobina').value = '';
+  document.getElementById('prod-data-entrega').value = '';
+  document.getElementById('prod-hora-inicio').value = '';
+  document.getElementById('prod-hora-termino').value = '';
 }
 function limparMP() {
   document.getElementById('mp-data').value = todayISO;
